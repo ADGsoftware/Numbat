@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+               android:orientation="vertical"
+               android:layout_width="fill_parent"
+               android:layout_height="fill_parent"
+               android:visibility="visible"
+               android:background="#808080"
+               android:id="@+id/linearLayout"
+               android:longClickable="true"
+               android:clickable="true"
+               android:gravity="center_horizontal">
+
+    <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#808080">
+
+        <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/notices"
+                android:layout_gravity="center"
+                android:typeface="sans"
+                android:gravity="center_vertical|center_horizontal"
+                android:layout_weight=".088"
+                android:textIsSelectable="false"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:text="Welcome!"/>
+
+        <!--<ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/toListButton"
+                android:src="@drawable/places_map_list"
+                android:layout_gravity="center_vertical|right"
+                android:layout_marginRight="10dip"
+                android:clickable="true"/>-->
+
+    </FrameLayout>
+
+    <RelativeLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:visibility="visible"
+            android:background="#808080"
+            android:id="@+id/relativeLayout"
+            android:longClickable="true"
+            android:clickable="true"
+            android:gravity="center_horizontal">
+
+        <FrameLayout
+                android:id="@+id/mapView"
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent" >
+        </FrameLayout>
+
+        <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/progressBar"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                android:indeterminate="false"
+                android:indeterminateBehavior="cycle"
+                style="@android:style/Widget.ProgressBar.Large"
+                android:focusable="true"
+                android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+</LinearLayout>
