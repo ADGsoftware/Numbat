@@ -3,14 +3,11 @@ package com.adg.Main;
 import android.app.*;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.v4.app.NotificationCompat;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Window;
@@ -18,41 +15,28 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.*;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.w3c.dom.Text;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Main extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
     public GoogleMap mMap;
     public ArrayList<Person> people = new ArrayList<Person>();
-    Marker user;
-    Marker dyushka;
-    Marker grishka;
-    Marker alik;
-    Marker natasha;
-    Marker google;
     ArrayList<String> sickMarkers = new ArrayList<String>();
+    boolean complete = false;
     private MapFragment mMapFragment;
     private ProgressBar progressBar;
-    //private ViewButton toListButton;
     private float zoom;
     private double userLng;
     private double userLat;
     private boolean touchDown;
+    private String userName = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,20 +59,13 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         lat = location.getLatitude();
         lng = location.getLongitude();
-
-
         userLat = lat;
         userLng = lng;
-
-
-
 
         //Create people
         createPeople();
 
-
-
-
+        /*
         //TODO: Create a notification method!
         //Create a notification with the latitude and longitude
         NotificationCompat.Builder mBuilder =
@@ -110,9 +87,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(3, mBuilder.build());
-
-
-
+        */
 
 
         zoom = 18.0f;
@@ -139,9 +114,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 
         //Set the User's coordinates into the TextView bar above the map
         TextView notices = (TextView) findViewById(R.id.notices);
-
         notices.setText("You are currently reporting coordinates from " + lat + ", " + lng);
-
 
         String name = login(notices);
 
@@ -158,10 +131,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
             }
         }
     }
-
-    private String userName = "";
-
-    boolean complete = false;
 
     public String login(TextView notices) {
         String name = "";
@@ -183,6 +152,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     private void getName(final TextView notices) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Please enter your ID.");
+        builder.setCancelable(false);
 
         // Set up the input
         final EditText input = new EditText(this);
@@ -234,7 +204,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         boolean healthy = Boolean.parseBoolean(userInfo[3]);
 
         notices.setText("Welcome, " + userName + "!");
-
 
 
         //Update the user's location and info.
@@ -310,8 +279,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
-
-
 
 
 //    public void onPause() {
