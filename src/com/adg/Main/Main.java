@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -37,6 +38,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     private double userLat;
     private boolean touchDown;
     private String userName = "";
+    MoreMethods methods = new MoreMethods();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,7 +76,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                         .setContentTitle("Coordinates")
                         .setContentText("Reporting Data from " + userLat + ", " + userLng);
         Intent resultIntent = new Intent(this, Main.class);
-
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(Main.class);
         stackBuilder.addNextIntent(resultIntent);
@@ -130,6 +131,10 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 Toast.makeText(getApplicationContext(), "Google Map Accessed Successfully.", Toast.LENGTH_SHORT).show();
             }
         }
+
+        //Set volume...
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
     }
 
     public String login(TextView notices) {
@@ -204,6 +209,10 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         boolean healthy = Boolean.parseBoolean(userInfo[3]);
 
         notices.setText("Welcome, " + userName + "!");
+
+        //Play welcoming music
+        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.katyusha);
+        mediaPlayer.start(); // no need to call prepare(); create() does that for you
 
 
         //Update the user's location and info.
@@ -285,16 +294,20 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 //
 //    }
 
-//    public void onResume() {
-//        super.onResume();
-//
-//        setContentView(R.layout.main);
-//        if (mMap != null) {
-//            Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_SHORT).show();
-//            mMap.addMarker(new MarkerOptions()
-//                    .position(new LatLng(userLat, userLng))
-//                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-//                    .title("You"));
-//        }
-//    }
+    public void onResume() {
+        super.onResume();
+        if (mMap == null) {
+            toast("Please close and re-open Numbat.");
+        } else {
+            toast("Welcome back!");
+        }
+    }
+
+
+
+
+    //Useful methods
+    public void toast(String text) {
+        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+    }
 }
