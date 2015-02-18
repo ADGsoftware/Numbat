@@ -3,14 +3,12 @@ package com.adg.Main;
 import com.google.android.gms.maps.model.Marker;
 
 public class Person {
+    public Marker marker;
     private int id;
     private String name;
     private double lat;
     private double lng;
-
     private boolean healthy;
-
-    public Marker marker;
 
     public Person(int id, String name, double lat, double lng) {
         this.id = id;

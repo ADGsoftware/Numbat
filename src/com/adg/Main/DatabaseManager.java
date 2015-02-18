@@ -7,18 +7,17 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
 
 class DatabaseManager extends AsyncTask<String, Void, String> {
 
-    protected String doInBackground(String... urls) {return urls[0];};
+    protected String doInBackground(String... urls) {
+        return urls[0];
+    }
+
+    ;
 
     public String[] read(int ID) {
         String responseString = "";
@@ -31,7 +30,7 @@ class DatabaseManager extends AsyncTask<String, Void, String> {
             e.printStackTrace();
         }
         StatusLine statusLine = response.getStatusLine();
-        if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+        if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
                 response.getEntity().writeTo(out);
@@ -45,7 +44,7 @@ class DatabaseManager extends AsyncTask<String, Void, String> {
                 e.printStackTrace();
             }
             //..more logic
-        } else{
+        } else {
             //Closes the connection.
             try {
                 response.getEntity().getContent().close();
@@ -63,7 +62,7 @@ class DatabaseManager extends AsyncTask<String, Void, String> {
         return stringPieces;
     }
 
-    public void update (int ID, double lat, double lng, boolean healthyBool) {
+    public void update(int ID, double lat, double lng, boolean healthyBool) {
         int healthy = (healthyBool) ? 1 : 0;
 
         String responseString = "";
@@ -76,7 +75,7 @@ class DatabaseManager extends AsyncTask<String, Void, String> {
             e.printStackTrace();
         }
         StatusLine statusLine = response.getStatusLine();
-        if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+        if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
                 response.getEntity().writeTo(out);
@@ -90,7 +89,7 @@ class DatabaseManager extends AsyncTask<String, Void, String> {
                 e.printStackTrace();
             }
             //..more logic
-        } else{
+        } else {
             //Closes the connection.
             try {
                 response.getEntity().getContent().close();
