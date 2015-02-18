@@ -13,6 +13,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -21,7 +22,6 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.text.InputType;
 import android.util.Log;
-import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -32,20 +32,20 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.*;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class Main extends Activity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnInfoWindowClickListener {
     public GoogleMap mMap;
     public ArrayList<Person> people = new ArrayList<Person>();
     public int ID = 0;
+    public Marker userMarker;
     ArrayList<String> sickMarkers = new ArrayList<String>();
     boolean complete = false;
     MoreMethods methods = new MoreMethods();
     Circle circle;
+    TextView notices;
     private MapFragment mMapFragment;
     private ProgressBar progressBar;
     private float zoom;
@@ -53,7 +53,12 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     private double userLat;
     private boolean touchDown;
     private String userName = "";
-    TextView notices;
+    private SensorManager sMan;
+    private float[] mAcc = new float[3];
+    private float[] mMag = new float[3];
+    private float[] mRotationMatrix = new float[9];
+    private float[] mOrientation = new float[3];
+    private float fAzimuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,14 +94,29 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 
         double lat = 0, lng = 0;
 
-        //Get last known user location.
-        //TODO: Get live-updating user location from listener. Use FINE_LOCATION
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        lat = location.getLatitude();
-        lng = location.getLongitude();
-        userLat = lat;
-        userLng = lng;
+        //Location
+        // Acquire a reference to the system Location Manager
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+// Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                userLat = location.getLatitude();
+                userLng = location.getLongitude();
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
+        };
+
+// Register the listener with the Location Manager to receive location updates
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         //Create people
         createPeople();
@@ -126,7 +146,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 
 
         zoom = 18.0f;
-        CameraPosition cameraPosition = new CameraPosition(new LatLng(lat, lng), zoom, 0, 0);
+        CameraPosition cameraPosition = new CameraPosition(new LatLng(userLat, userLng), zoom, 0, 0);
         GoogleMapOptions options = new GoogleMapOptions();
         options.mapType(GoogleMap.MAP_TYPE_SATELLITE)
                 .compassEnabled(false)
@@ -149,7 +169,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 
         //Set the User's coordinates into the TextView bar above the map
         TextView notices = (TextView) findViewById(R.id.notices);
-        notices.setText("You are currently reporting coordinates from " + lat + ", " + lng);
+        notices.setText("You are currently reporting coordinates from " + userLat + ", " + userLng);
 
         mMap = mMapFragment.getMap();
 
@@ -167,6 +187,8 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         //Set volume...
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC) - am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+
+        //updateCompass();
     }
 
     public String login(TextView notices) {
@@ -224,6 +246,11 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         builder.show();
     }
 
+
+//    public void onPause() {
+//
+//    }
+
     public void postLogin(String name, TextView notices) throws IOException {
         //Toast.makeText(getApplicationContext(), "Now, your name is " + name + ".", Toast.LENGTH_SHORT).show();
 
@@ -253,6 +280,9 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         //Update the user's location and info.
         //new DatabaseManager().update(ID, userLat, userLng, true);
     }
+
+
+    //Useful methods
 
     public void createPeople() {
         //people.add(new Person(0, "You", userLat, userLng));
@@ -294,9 +324,9 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         }
 
         //Draw a circle at the user's location
-        mMap.addMarker(new MarkerOptions()
+        userMarker = mMap.addMarker(new MarkerOptions()
                 .position(new LatLng(userLat, userLng))
-                .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.arrow_blue_transparent)))
+                .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_up)))
                 .title("Your Location")
                 .snippet("You"));
 
@@ -337,11 +367,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 .show();
     }
 
-
-//    public void onPause() {
-//
-//    }
-
     public void onResume() {
         super.onResume();
         if (mMap == null) {
@@ -350,9 +375,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 //            toast("Welcome back!");
         }
     }
-
-
-    //Useful methods
 
     //Create toast
     public void toast(String text) {
@@ -381,5 +403,52 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 polygon.setFillColor(0x7F00FF00);
             }
         }
+    }
+
+    public void updateCompass() {
+        //Set up sensor manager
+        sMan = (SensorManager) getApplicationContext().getSystemService(SENSOR_SERVICE);
+
+        //Listener for magnetic and accelerometer events
+        SensorEventListener eventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                switch (event.sensor.getType()) {
+                    case Sensor.TYPE_ACCELEROMETER:
+                        mAcc = event.values.clone();
+                        break;
+                    case Sensor.TYPE_MAGNETIC_FIELD:
+                        mMag = event.values.clone();
+                        break;
+                }
+
+                SensorManager.getRotationMatrix(mRotationMatrix, null, mAcc, mMag);
+                SensorManager.getOrientation(mRotationMatrix, mOrientation);
+
+                fAzimuth = (float) Math.round(Math.toDegrees(mOrientation[0]));
+                fAzimuth = (fAzimuth + 360) % 360;
+
+                toast("" + fAzimuth);
+
+                if ((fAzimuth > 0 && fAzimuth <= 45) && (fAzimuth > 315 && fAzimuth <= 0)) {
+                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_up)));
+                } else if (fAzimuth > 45 && fAzimuth <= 135) {
+                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_right)));
+                } else if (fAzimuth > 135 && fAzimuth <= 225) {
+                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_down)));
+                } else {
+                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_left)));
+                }
+                notices.setText(String.valueOf(fAzimuth));
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+        };
+
+        //Register listeners for magnetic and accelerometer sensors
+        sMan.registerListener(eventListener, sMan.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_NORMAL);
+        sMan.registerListener(eventListener, sMan.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
     }
 }
