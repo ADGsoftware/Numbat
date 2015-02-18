@@ -27,6 +27,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
@@ -46,11 +47,13 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     MoreMethods methods = new MoreMethods();
     Circle circle;
     TextView notices;
+    ArrayList<Polygon> rectangles = new ArrayList<Polygon>();
     private MapFragment mMapFragment;
     private ProgressBar progressBar;
     private float zoom;
-    private double userLng;
-    private double userLat;
+    //MIT Dome by default
+    private double userLat = 42.360184;
+    private double userLng = -71.091990;
     private boolean touchDown;
     private String userName = "";
     private SensorManager sMan;
@@ -59,6 +62,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     private float[] mRotationMatrix = new float[9];
     private float[] mOrientation = new float[3];
     private float fAzimuth;
+    private int request = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,6 +70,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         setContentView(R.layout.main);
+        final TextView notices = (TextView) findViewById(R.id.notices);
 
         /*FIRST RUN!!!*/
         //Test if application has been started for the first time
@@ -92,17 +97,28 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        double lat = 0, lng = 0;
+        //Create people
+        createPeople();
+
+        //First, get last known location
+        LocationManager tempLocationManager = (LocationManager)getSystemService
+                (Context.LOCATION_SERVICE);
+        Location lastKnownLocation = tempLocationManager.getLastKnownLocation
+                (LocationManager.PASSIVE_PROVIDER);
+        userLng = lastKnownLocation.getLongitude();
+        userLat = lastKnownLocation.getLatitude();
 
         //Location
         // Acquire a reference to the system Location Manager
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-// Define a listener that responds to location updates
+        // Define a listener that responds to location updates
         LocationListener locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
                 userLat = location.getLatitude();
                 userLng = location.getLongitude();
+                request++;
+                notices.setText("Location requests:" + request);
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -117,9 +133,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 
 // Register the listener with the Location Manager to receive location updates
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-        //Create people
-        createPeople();
 
         /*
         //TODO: Create a notification method!
@@ -168,7 +181,6 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         f.executePendingTransactions();
 
         //Set the User's coordinates into the TextView bar above the map
-        TextView notices = (TextView) findViewById(R.id.notices);
         notices.setText("You are currently reporting coordinates from " + userLat + ", " + userLng);
 
         mMap = mMapFragment.getMap();
@@ -180,7 +192,8 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
 //            Toast.makeText(getApplicationContext(), "Cannot access Google Map.", Toast.LENGTH_SHORT).show();
             if (mMap != null) {
                 // The Map is verified. It is now safe to manipulate the map.
-//                Toast.makeText(getApplicationContext(), "Google Map Accessed Successfully.", Toast.LENGTH_SHORT).show();
+                makeMarkers();
+                toast("Google Map Accessed Successfully.");
             }
         }
 
@@ -188,7 +201,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC) - am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
 
-        //updateCompass();
+        updateCompass();
     }
 
     public String login(TextView notices) {
@@ -331,7 +344,7 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 .snippet("You"));
 
         //Separate the world into rectangles
-        rectangles();
+        rectangles = rectangles();
     }
 
     @Override
@@ -389,7 +402,8 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
     }
 
     //Divide the world up into rectangles
-    public void rectangles() {
+    public ArrayList<Polygon> rectangles() {
+        ArrayList<Polygon> rectangles = new ArrayList<Polygon>();
         double it = 0.1;
         double rITP = it / 2;
         double plusMinus = 1;
@@ -401,8 +415,10 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                         .strokeWidth(3)
                         .fillColor(Color.BLUE));
                 polygon.setFillColor(0x7F00FF00);
+                rectangles.add(polygon);
             }
         }
+        return rectangles;
     }
 
     public void updateCompass() {
@@ -428,18 +444,20 @@ public class Main extends Activity implements GoogleMap.OnMarkerClickListener, G
                 fAzimuth = (float) Math.round(Math.toDegrees(mOrientation[0]));
                 fAzimuth = (fAzimuth + 360) % 360;
 
-                toast("" + fAzimuth);
+                //toast("" + fAzimuth);
 
-                if ((fAzimuth > 0 && fAzimuth <= 45) && (fAzimuth > 315 && fAzimuth <= 0)) {
-                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_up)));
-                } else if (fAzimuth > 45 && fAzimuth <= 135) {
-                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_right)));
-                } else if (fAzimuth > 135 && fAzimuth <= 225) {
-                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_down)));
-                } else {
-                    userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_left)));
-                }
-                notices.setText(String.valueOf(fAzimuth));
+                /*if (userMarker != null) {
+                    if ((fAzimuth > 0 && fAzimuth <= 45) && (fAzimuth > 315 && fAzimuth <= 0)) {
+                        userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_up)));
+                    } else if (fAzimuth > 45 && fAzimuth <= 135) {
+                        userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_right)));
+                    } else if (fAzimuth > 135 && fAzimuth <= 225) {
+                        userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_down)));
+                    } else {
+                        userMarker.setIcon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.a_left)));
+                    }
+                }*/
+                //notices.setText(String.valueOf(fAzimuth));
             }
 
             @Override
